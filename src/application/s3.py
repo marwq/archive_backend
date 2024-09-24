@@ -1,0 +1,54 @@
+import aioboto3
+from loguru import logger
+
+from config import settings
+
+from aiofiles import open as aopen
+
+
+session = aioboto3.Session(
+    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+    region_name=settings.AWS_DEFAULT_REGION
+)
+
+async def upload_file_to_s3(file_content: bytes, bucket_name: str, object_name: str):
+    file_path = f'temp_files/{object_name}'
+    
+    async with aopen(file_path, 'wb') as f:
+        await f.write(file_content)
+         
+    async with session.client('s3') as s3_client:
+        try:
+            async with aopen(file_path, 'rb') as file:
+                await s3_client.upload_fileobj(file, bucket_name, object_name)
+            logger.info(f"File {file_path} uploaded to {bucket_name}/{object_name}")
+        except Exception as e:
+            logger.info(f"Error uploading file: {e}")
+            return False
+    return True
+
+async def get_download_link_from_s3(bucket_name: str, object_name: str, expiration: int = 3600):
+    """Получить временную ссылку для скачивания файла из S3.
+    
+    Args:
+        bucket_name (str): Название S3-бакета.
+        object_name (str): Имя объекта в бакете.
+        expiration (int, optional): Время действия ссылки в секундах (по умолчанию 1 час).
+    
+    Returns:
+        str: Временная ссылка для скачивания файла.
+    """
+    async with session.client('s3') as s3_client:
+        try:
+            download_url = await s3_client.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': bucket_name, 'Key': object_name},
+                ExpiresIn=expiration
+            )
+            logger.info(f"Generated download link for {bucket_name}/{object_name}: {download_url}")
+            return download_url
+        except Exception as e:
+            logger.error(f"Error generating download link: {e}")
+            return None
+

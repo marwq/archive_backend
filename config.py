@@ -6,10 +6,28 @@ load_dotenv()
 
 
 class Settings(BaseSettings):
+    APP_PORT: int
+    
+    # Postgres
     DB_HOST: str
     DB_PORT: str
     DB_USER: str
     DB_PASS: str
+    DB_NAME: str
+    
+    # Open AI
+    OPENAI_TOKEN: str
+    
+    # JWT
+    SECRET_KEY: str
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_DAYS: int
+    
+    # S3
+    AWS_ACCESS_KEY_ID: str
+    AWS_SECRET_ACCESS_KEY: str
+    AWS_DEFAULT_REGION: str
+    AWS_BUCKET_NAME: str
 
 
 settings = Settings()
