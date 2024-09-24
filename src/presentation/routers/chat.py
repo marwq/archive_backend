@@ -15,7 +15,6 @@ from src.application.redis import redis_client
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
-
 @router.post("/new")
 async def new(
     file: UploadFile = File(...),
