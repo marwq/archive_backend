@@ -6,6 +6,7 @@ from sqlalchemy import UUID, ForeignKey, Text, func, String, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
+from .chat import Chat
 
 
 
@@ -21,4 +22,4 @@ class Message(Base):
     content: Mapped[str] = mapped_column(Text())
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     
-    chat = relationship("Chat", foreign_keys=[chat_id])
+    chat: Mapped[Chat] = relationship(Chat, foreign_keys=[chat_id], lazy="selectin")

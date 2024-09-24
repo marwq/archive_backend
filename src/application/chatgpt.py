@@ -4,12 +4,45 @@ from openai import AsyncOpenAI
 from loguru import logger
 
 from src.application.redis import redis_client
+from src.presentation.di import get_uow
 from config import settings
 
 
 client = AsyncOpenAI(api_key=settings.OPENAI_TOKEN)
 
 
+
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "rewrite_doc",
+            "description": "Mark this question as asking for rewrite",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                },
+                "required": [],
+                "additionalProperties": False
+            }
+        }
+    }
+]
+
+async def generate_answer(messages: list[dict[str, str]]) -> tuple[str, bool]:
+    logger.info(f"generating answer: {messages}")
+    response = await client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=messages,
+        tools=tools,
+    )
+    content = response.choices[0].message.content
+    rewrite_requested = bool(response.choices[0].message.tool_calls)
+    logger.info(f"generated answer: ({content!r}, {rewrite_requested!r})")
+    if rewrite_requested and not content:
+        content = "Ожидайте..."
+    return (content, rewrite_requested)
+    
 
 async def generate_title(content: str) -> str:
     response = await client.chat.completions.create(
@@ -26,6 +59,46 @@ async def generate_title(content: str) -> str:
         ],
     )
     return response.choices[0].message.content
+
+async def rewrite_doc(content: str, prompt: str, doc_version_id: str) -> str:
+    response = await client.chat.completions.create(
+        stream=True,
+        model="gpt-4o-mini",
+        messages=[
+            {
+            "role": "system",
+            "content": f"Content: {content}\n"+
+                        f"Prompt: {prompt}\n\n"+
+                        "Rewrite document. Content and prompt for rewriting are given above. Answer with plain/markdown format, so no any less words or comments, but use markdown to format document and make structurized:",
+            },
+            {
+            "role": "user",
+            "content": content
+            }
+        ],
+    )
+    full_text = ""
+    async for text in response.response.aiter_lines():
+        if not text:
+            continue
+        data = text.removeprefix("data: ")
+        if data.strip() == "[DONE]":
+            break
+        data = json.loads(text.removeprefix("data: "))
+        if data["choices"][0]["finish_reason"]:
+            break
+        chunk_text = data["choices"][0]["delta"]["content"]
+        await redis_client.rpush(f"stream:{doc_version_id}", chunk_text)
+        logger.info(chunk_text)
+        full_text += chunk_text
+    await redis_client.rpush(f"stream:{doc_version_id}", "[close]")
+    await redis_client.srem("active_streams", doc_version_id)
+    
+    uow = await get_uow()
+    async with uow:
+        await uow.chat_repo.edit_doc_version(doc_version_id, full_text)
+        
+    return full_text
 
 async def ocr(fileurl: str, doc_version_id: str) -> str:
     response = await client.chat.completions.create(

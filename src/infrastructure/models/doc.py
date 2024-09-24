@@ -28,7 +28,7 @@ class DocVersion(Base):
     updated_at: Mapped[datetime] = mapped_column(server_onupdate=func.now(), server_default=func.now())
     
     chat: Mapped[Chat] = relationship("Chat", back_populates="doc_versions", foreign_keys=[chat_id], lazy="selectin")
-    doc_origin: Mapped[DocOrigin] = relationship("DocOrigin", foreign_keys=[doc_origin_id])
+    doc_origin: Mapped[DocOrigin] = relationship("DocOrigin", foreign_keys=[doc_origin_id], lazy="selectin")
 
 class DocOrigin(Base):
     __tablename__ = "doc_origins"

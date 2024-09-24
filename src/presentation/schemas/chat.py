@@ -9,7 +9,7 @@ class NewChatOut(BaseModel):
 
 class DocVersionOut(BaseModel):
     id: UUID4
-    content: str
+    content: str | None
     created_at: datetime
     updated_at: datetime
     

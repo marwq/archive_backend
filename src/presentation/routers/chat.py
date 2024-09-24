@@ -1,4 +1,5 @@
 from typing import Annotated
+from itertools import chain
 import asyncio
 
 from fastapi import APIRouter, UploadFile, File, Depends, WebSocket, BackgroundTasks
@@ -6,11 +7,13 @@ from pydantic import UUID4
 from loguru import logger
 
 from src.infrastructure.uow import SQLAlchemyUoW
+from src.infrastructure.models import Chat, DocOrigin, DocVersion
 from src.application.s3 import upload_s3_and_ocr
 from src.presentation.di import get_uow, get_user_id
 from ..schemas.chat import NewChatOut, NewMessageIn, NewMessageOut, ChatOut, DocVersionOut, MessageOut
 from config import settings
 from src.application.redis import redis_client
+from src.application.chatgpt import generate_answer, rewrite_doc
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -26,6 +29,7 @@ async def new(
     async with uow:
         chat = await uow.chat_repo.create_chat(user_id)
         chat_id = chat.id
+        message = await uow.chat_repo.create_message(chat_id, "Если есть вопросы или нужно ввести правки напишите сюда запрос", False)
         doc_origin = await uow.chat_repo.create_doc_origin(False, ext=ext)
         doc_origin_id = doc_origin.id
         doc_version = await uow.chat_repo.create_doc_version(chat_id, doc_origin_id)
@@ -55,7 +59,13 @@ async def get_chat(
                 for dv in chat.doc_versions
             ],
             messages=[
-                
+                MessageOut(
+                    id=msg.id,
+                    is_user=msg.is_user,
+                    content=msg.content,
+                    created_at=msg.created_at,
+                )
+                for msg in chat.messages
             ]
         )
     return resp
@@ -86,6 +96,44 @@ async def streaming(
 
 @router.post("/message")
 async def message(
-    data: NewMessageIn
+    data: NewMessageIn,
+    uow: Annotated[SQLAlchemyUoW, Depends(get_uow)] = ...,
+    background_tasks: BackgroundTasks = ...,
 ) -> NewMessageOut:
-    ...
+    chat_id = str(data.chat_id)
+    async with uow:
+        chat = await uow.chat_repo.get_item_by_id(chat_id)
+        doc_origin = chat.doc_versions[0].doc_origin
+        origin_content = doc_origin.content
+        user_message = await uow.chat_repo.create_message(chat_id, data.content, True)
+        messages = [
+            {
+                "role": "system",
+                "content": "Твой чат начался с того что ты распознал текст из архивной картинки. Теперь твоя задача отвечать на вопросы по документу коротко и ясно.\n" \
+                "Если вопрос подразумевает переписание документа то используй функцию \"rewrite_doc\". \n" + 
+                "Функция \"rewrite_doc\" не принимает аргументов,  она лишь говорит бекенду что нужно вызвать другой ИИ для переписания.\n" +
+                "То есть если задали вопрос то просто отвечаешь на него, если попросили переписать каким то образом, то отвечаешь в роде \"Хорошо, переписываю ваш документ\" и вызываешь функцию \"rewrite_doc\".",
+            },
+            {
+                "role": "assistant",
+                "content": origin_content
+            }
+        ] + [
+            {
+                "role": "user" if message.is_user else "assistant",
+                "content": message.content
+            }
+            for message in chain(chat.messages, [user_message])
+        ]
+        content, rewrite_requested = await generate_answer(messages)
+        await uow.chat_repo.create_message(chat_id, content, False)
+        if rewrite_requested:
+            new_doc_version = await uow.chat_repo.create_doc_version(chat_id, doc_origin.id)
+            new_doc_version_id = str(new_doc_version.id)
+        else:
+            new_doc_version_id = None
+    
+    if rewrite_requested:
+        background_tasks.add_task(rewrite_doc, origin_content, data.content, new_doc_version_id)
+    
+    return NewMessageOut(content=content, new_doc_version_id=new_doc_version_id)

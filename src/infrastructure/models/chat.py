@@ -20,5 +20,6 @@ class Chat(Base):
     title: Mapped[Optional[str]] = mapped_column(String(256))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     
-    user = relationship("User", foreign_keys=[user_id])
+    user = relationship("User", foreign_keys=[user_id], lazy="selectin")
     doc_versions = relationship("DocVersion", back_populates="chat", uselist=True, lazy="selectin")
+    messages = relationship("Message", back_populates="chat", uselist=True, lazy="selectin", order_by="Message.created_at")

@@ -34,6 +34,13 @@ class ChatRepo(SQLAlchemyRepo[Chat]):
         await self._session.refresh(doc_version)
         return doc_version
     
+    async def create_message(self, chat_id: str, content: str, is_user: bool) -> Message:
+        message = Message(content=content, chat_id=chat_id, is_user=is_user)
+        self._session.add(message)
+        await self._session.commit()
+        await self._session.refresh(message)
+        return message
+    
     async def edit_doc_version(self, doc_version_id: str, content: str) -> DocVersion:
         stmt = (
             update(DocVersion)
