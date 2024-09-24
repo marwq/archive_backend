@@ -9,6 +9,8 @@ from config import settings
 
 client = AsyncOpenAI(api_key=settings.OPENAI_TOKEN)
 
+
+
 async def generate_title(content: str) -> str:
     response = await client.chat.completions.create(
         model="gpt-4o-mini",
@@ -32,19 +34,26 @@ async def ocr(fileurl: str, doc_version_id: str) -> str:
         model="gpt-4o",
         messages=[
             {
-            "role": "assistant",
-            "content": "Recognize the text from the image and format it in Markdown. Wrap any found dates in the <date></date> tag and phone numbers in the <phone></phone> tag. Maintain proper Markdown formatting (e.g., #, ## for headers). Reply with only the recognized and formatted text without any comments.",
+                "role": "assistant",
+                "content": """Ты — профессионал в области распознавания текста с изображений. Независимо от того, насколько сложно определить текст на картинке, ты идеально определяешь его. Картинка будет иметь ВСЕГДА иметь текст на русском или казахском. Если же часть текста потеряна, страница порвана, отсутствует слово, то вставляй слова по смыслу или схожие по оставшимся буквам. Твоя задача — преобразовать текст с любого изображения в читаемый формат Markdown, используя определенные правила разметки. Главное - отправь ВЕСЬ видимый текст целиком. Ты должен сделать так, чтобы текст выделял важные элементы. Ты не добавляешь никаких комментариев или лишней информации, только результат распознавания текста в нужном формате. Не используй "\n" для переноса строки, используй Enter.
+                Ответ должен быть в формате plaintext и содержать Markdown текст Пример ответа:
+                "###Оглавление Пример текста с Markdown разметкой."
+                Пользователь же отправляет изображение, на котором изображен текст, который нужно распознать в следующем формате:
+                {
+                    "image_url": "https://example.com/image.jpg"
+                }
+            """,
             },
             {
-            "role": "user",
-            "content": [
-                {
-                "type": "image_url",
-                "image_url": {
-                    "url": fileurl,
-                },
-                },
-            ],
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": fileurl,
+                        },
+                    },
+                ],
             }
         ],
     )
@@ -65,4 +74,3 @@ async def ocr(fileurl: str, doc_version_id: str) -> str:
     await redis_client.rpush(f"stream:{doc_version_id}", "[close]")
     await redis_client.srem("active_streams", doc_version_id)
     return full_text
-    
