@@ -23,6 +23,7 @@ class ChatOut(BaseModel):
     id: UUID4
     title: str | None
     created_at: datetime
+    image_url: str
     doc_versions: list[DocVersionOut]
     messages: list[MessageOut]
 

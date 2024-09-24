@@ -1,8 +1,11 @@
 import aioboto3
 from loguru import logger
 from aiofiles import open as aopen
+from starlette.concurrency import run_in_threadpool
 
 from .chatgpt import ocr, generate_title
+from .redis import redis_client
+from src.application.upscale import preprocess_image
 from src.infrastructure.uow import SQLAlchemyUoW
 from src.presentation.di import get_uow
 from config import settings
@@ -38,7 +41,7 @@ async def upload_s3_and_ocr(
 
 async def upload_file_to_s3(file_content: bytes, bucket_name: str, object_name: str):
     file_path = f'temp_files/{object_name}'
-    
+    await run_in_threadpool(preprocess_image, file_path, file_path)
     async with aopen(file_path, 'wb') as f:
         await f.write(file_content)
          
@@ -76,3 +79,9 @@ async def get_download_link_from_s3(bucket_name: str, object_name: str, expirati
             logger.error(f"Error generating download link: {e}")
             return None
 
+async def get_download_link_from_s3_cached(bucket_name: str, object_name: str, expire: int = 3600) -> str:
+    url = await redis_client.get(f"download_url:{bucket_name}:{object_name}")
+    if not url:
+        url = await get_download_link_from_s3(bucket_name, object_name, expire)
+        await redis_client.set(f"download_url:{bucket_name}:{object_name}", url, expire)
+    return url
