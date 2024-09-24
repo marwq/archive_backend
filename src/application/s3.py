@@ -2,7 +2,7 @@ import aioboto3
 from loguru import logger
 from aiofiles import open as aopen
 
-from .chatgpt import ocr
+from .chatgpt import ocr, generate_title
 from src.infrastructure.uow import SQLAlchemyUoW
 from src.presentation.di import get_uow
 from config import settings
@@ -19,16 +19,22 @@ async def upload_s3_and_ocr(
     file_content: bytes, 
     bucket_name: str, 
     object_name: str,
-    doc_id: str
+    doc_version_id: str
 ) -> None:
     await upload_file_to_s3(file_content, bucket_name, object_name)
     url = await get_download_link_from_s3(bucket_name, object_name)
     logger.info(f"Url: {url}")
-    text = await ocr(url, doc_id)
+    text = await ocr(url, doc_version_id)
     logger.info(text)
     uow = await get_uow()
     async with uow:
-        await uow.chat_repo.edit_doc(doc_id, text)
+        doc_version = await uow.chat_repo.edit_doc_version(doc_version_id, text)
+        await uow.chat_repo.edit_doc_origin(doc_version.doc_origin_id, text)
+        title = await generate_title(text)
+        logger.info(f"Title generated: {title}")
+        chat = doc_version.chat
+        chat.title = title
+        await uow.commit()
 
 async def upload_file_to_s3(file_content: bytes, bucket_name: str, object_name: str):
     file_path = f'temp_files/{object_name}'

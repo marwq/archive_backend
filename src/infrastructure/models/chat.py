@@ -17,8 +17,8 @@ class Chat(Base):
         ForeignKey("users.id", name="fk_chats_user_id"), 
         index=True
     )
-    ext: Mapped[str] = mapped_column(String(256))
     title: Mapped[Optional[str]] = mapped_column(String(256))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     
     user = relationship("User", foreign_keys=[user_id])
+    doc_versions = relationship("DocVersion", back_populates="chat", uselist=True, lazy="selectin")
