@@ -41,7 +41,7 @@ async def upload_s3_and_ocr(
 
 async def upload_file_to_s3(file_content: bytes, bucket_name: str, object_name: str):
     file_path = f'temp_files/{object_name}'
-    await run_in_threadpool(preprocess_image, file_path, file_path)
+    # await run_in_threadpool(preprocess_image, file_path, file_path)
     async with aopen(file_path, 'wb') as f:
         await f.write(file_content)
          
