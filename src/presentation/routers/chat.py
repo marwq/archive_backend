@@ -34,6 +34,7 @@ async def new(
     background_tasks.add_task(upload_s3_and_ocr, await file.read(), settings.AWS_BUCKET_NAME, f"{doc_origin_id}.{ext}", str(doc_version_id))
     return NewChatOut(chat_id=chat_id, doc_version_id=doc_version_id)
 
+
 @router.get("/{chat_id}")
 async def get_chat(
     chat_id: UUID4,
@@ -55,10 +56,11 @@ async def get_chat(
                 for dv in chat.doc_versions
             ],
             messages=[
-                
+
             ]
         )
     return resp
+
 
 @router.websocket("/streaming/{doc_version_id}")
 async def streaming(
@@ -82,7 +84,7 @@ async def streaming(
         await asyncio.sleep(0.3)
     await websocket.send_text("[close]")
     await websocket.close()
-    
+
 
 @router.post("/message")
 async def message(
