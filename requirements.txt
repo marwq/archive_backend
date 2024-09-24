@@ -12,3 +12,6 @@ loguru
 aioboto3
 asyncpg
 psycopg2
+redis
+aioredis==2.0.1
+openai

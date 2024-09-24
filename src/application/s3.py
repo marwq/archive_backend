@@ -1,9 +1,12 @@
 import aioboto3
 from loguru import logger
+from aiofiles import open as aopen
 
+from .chatgpt import ocr
+from src.infrastructure.uow import SQLAlchemyUoW
+from src.presentation.di import get_uow
 from config import settings
 
-from aiofiles import open as aopen
 
 
 session = aioboto3.Session(
@@ -11,6 +14,21 @@ session = aioboto3.Session(
     aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
     region_name=settings.AWS_DEFAULT_REGION
 )
+
+async def upload_s3_and_ocr(
+    file_content: bytes, 
+    bucket_name: str, 
+    object_name: str,
+    doc_id: str
+) -> None:
+    await upload_file_to_s3(file_content, bucket_name, object_name)
+    url = await get_download_link_from_s3(bucket_name, object_name)
+    logger.info(f"Url: {url}")
+    text = await ocr(url, doc_id)
+    logger.info(text)
+    uow = await get_uow()
+    async with uow:
+        await uow.chat_repo.edit_doc(doc_id, text)
 
 async def upload_file_to_s3(file_content: bytes, bucket_name: str, object_name: str):
     file_path = f'temp_files/{object_name}'

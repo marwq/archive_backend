@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     
     # Open AI
     OPENAI_TOKEN: str
+    OPENAI_ASSISTANT_ID: str
     
     # JWT
     SECRET_KEY: str
@@ -28,6 +29,11 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str
     AWS_DEFAULT_REGION: str
     AWS_BUCKET_NAME: str
+    
+    # REDIS
+    REDIS_HOST: str
+    REDIS_PORT: str
+    REDIS_PASS: str
 
 
 settings = Settings()

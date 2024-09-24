@@ -2,8 +2,9 @@
 from datetime import date, datetime, timedelta
 from typing import Sequence
 
+from sqlalchemy import select, insert, update
 
-from src.infrastructure.models import Chat
+from src.infrastructure.models import Chat, Doc, Message
 from src.infrastructure.repositories.base import SQLAlchemyRepo
 
 
@@ -18,3 +19,19 @@ class ChatRepo(SQLAlchemyRepo[Chat]):
         await self._session.commit()
         await self._session.refresh(chat)
         return chat
+    
+    async def create_doc(self, chat_id: str, content: str | None = None) -> Doc:
+        doc = Doc(chat_id=chat_id, content=content)
+        self._session.add(doc)
+        await self._session.commit()
+        await self._session.refresh(doc)
+        return doc
+    
+    async def edit_doc(self, doc_id: str, content: str) -> None:
+        stmt = (
+            update(Doc)
+            .where(Doc.id == doc_id)
+            .values(dict(content=content))
+        )
+        await self._session.execute(stmt)
+        await self._session.commit()
