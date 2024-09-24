@@ -13,5 +13,13 @@ class DocVersionOut(BaseModel):
     updated_at: datetime
 
 
+class DocOriginOut(BaseModel):
+    id: UUID4
+    content: str
+    is_archive: bool
+    created_at: datetime
+    updated_at: datetime
+
+
 class SearchOut(BaseModel):
-    doc_versions: list[DocVersionOut]
+    doc_origins: list[DocOriginOut]
