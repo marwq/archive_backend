@@ -38,8 +38,8 @@ class ChatRepo(SQLAlchemyRepo[Chat]):
         await self._session.refresh(doc_version)
         return doc_version
 
-    async def get_doc_version_by_id(self, doc_version_id: str) -> DocVersion:
-        stmt = select(DocVersion).where(DocVersion.id == doc_version_id)
+    async def get_doc_origin_by_id(self, doc_origin_id: str) -> DocOrigin:
+        stmt = select(DocOrigin).where(DocOrigin.id == doc_origin_id)
         result = await self._session.execute(stmt)
         return result.scalar()
 
@@ -49,7 +49,7 @@ class ChatRepo(SQLAlchemyRepo[Chat]):
         await self._session.commit()
         await self._session.refresh(message)
         return message
-    
+
     async def edit_doc_version(self, doc_version_id: str, content: str) -> DocVersion:
         stmt = (
             update(DocVersion)
@@ -70,13 +70,13 @@ class ChatRepo(SQLAlchemyRepo[Chat]):
         await self._session.execute(stmt)
         await self._session.commit()
 
-    async def search_doc_in_vectordb(self, text: str) -> Sequence[DocVersion]:
+    async def search_doc_in_vectordb(self, text: str) -> Sequence[DocOrigin]:
         index = initialize_pinecone()
         search_results = search_text(text, index)
-        doc_versions = []
+        doc_origins = []
         for result in search_results:
-            doc_version_id = result['id']
-            doc_version = await self.get_doc_version_by_id(doc_version_id)
-            if doc_version:
-                doc_versions.append(doc_version)
-        return doc_versions
+            doc_origin_id = result['id']
+            doc_origin = await self.get_doc_origin_by_id(doc_origin_id)
+            if doc_origin:
+                doc_origins.append(doc_origin)
+        return doc_origins
