@@ -11,6 +11,7 @@ register_routers(app)
 
 
 def main():
+
     import uvicorn
 
     kwargs = dict(
@@ -20,6 +21,7 @@ def main():
     )
 
     uvicorn.run("main:app", **kwargs)
+
 
 if __name__ == "__main__":
     main()

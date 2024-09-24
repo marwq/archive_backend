@@ -11,7 +11,6 @@ from config import settings
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
-
 @router.post("/new")
 async def new(
     file: UploadFile = File(...),
@@ -24,7 +23,7 @@ async def new(
         chat_id = chat.id
     await upload_file_to_s3(await file.read(), settings.AWS_BUCKET_NAME, f"{chat_id}.{ext}")
     return NewChatOut(chat_id=chat_id, stream_id=chat_id)
-    
+
 
 @router.post("/message")
 async def message(

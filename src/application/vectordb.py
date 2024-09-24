@@ -3,13 +3,13 @@ from pinecone import Pinecone, ServerlessSpec
 from dotenv import load_dotenv, find_dotenv
 from typing import List, Dict, Any
 from llama_index.embeddings.gemini import GeminiEmbedding
+from config import settings
 
-load_dotenv(find_dotenv())
 
 model_name = "models/embedding-001"
 
 embed_model = GeminiEmbedding(
-    model_name=model_name, api_key=os.getenv('GOOGLE_AI_API_KEY'), title="this is a document"
+    model_name=model_name, api_key=settings.GOOGLE_AI_API_KEY, title="this is a document"
 )
 
 
@@ -21,9 +21,9 @@ class Doc:
 
 def initialize_pinecone() -> Pinecone:
     # load_dotenv(find_dotenv())  # read local .env file
-    api_key = os.getenv('PINECONE_KEY')
-    environment = os.getenv('PINECONE_ENVIRONMENT')
-    index_name = os.getenv('PINECONE_INDEX_NAME', 'archive-hackaton')
+    api_key = settings.PINECONE_API_KEY
+    environment = settings.PINECONE_ENVIRONMENT
+    index_name = 'archive-hackaton'
 
     pc = Pinecone(api_key=api_key)
 
