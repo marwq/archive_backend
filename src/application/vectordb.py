@@ -61,7 +61,7 @@ def search_text(text: str, index: Pinecone.Index) -> List[Dict[str, Any]]:
 
     results = index.query(
         vector=vector,
-        top_k=5,  # Number of top results to return
+        top_k=9,  # Number of top results to return
         include_metadata=True  # Include the metadata of the results
     )
 
