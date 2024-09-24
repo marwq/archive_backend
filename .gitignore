@@ -2,3 +2,4 @@ venv/
 .env
 temp_files/
 **__pycache__**
+.forme
