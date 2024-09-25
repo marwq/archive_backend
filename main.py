@@ -14,7 +14,7 @@ app = FastAPI(
 )
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://archive-frontend-xi.vercel.app"],  # Разрешаем запросы с любых источников
+    allow_origins=["*"],  # Разрешаем запросы с любых источников
     allow_credentials=True,
     allow_methods=["*"],  # Разрешаем все HTTP методы (GET, POST, PUT, DELETE и т.д.)
     allow_headers=["*"],  # Разрешаем все заголовки
