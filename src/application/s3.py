@@ -5,7 +5,7 @@ from starlette.concurrency import run_in_threadpool
 
 from .chatgpt import ocr, generate_title
 from .redis import redis_client
-from src.application.upscale import preprocess_image
+# from src.application.upscale import preprocess_image
 from src.application.vectordb import text_to_vector, Doc
 from src.infrastructure.uow import SQLAlchemyUoW
 from src.presentation.di import get_uow
