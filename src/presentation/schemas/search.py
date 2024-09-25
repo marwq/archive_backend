@@ -6,6 +6,10 @@ class SearchIn(BaseModel):
     text: str
 
 
+class DocIn(BaseModel):
+    text: str
+
+
 class DocVersionOut(BaseModel):
     id: UUID4
     content: str
