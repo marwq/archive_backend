@@ -115,8 +115,8 @@ async def message(
         messages = [
             {
                 "role": "system",
-                "content": "Твой чат начался с того что ты распознал текст из архивной картинки. Теперь твоя задача отвечать на вопросы по документу коротко и ясно.\n" \
-                "Если вопрос подразумевает переписание документа то используй функцию \"rewrite_doc\". \n" + 
+                "content": "Твой чат начался с того что ты распознал текст из архивной картинки. Теперь твоя задача отвечать на вопросы по документу коротко и ясно.\n"
+                "Если вопрос подразумевает переписание документа то используй функцию \"rewrite_doc\". \n" +
                 "Функция \"rewrite_doc\" не принимает аргументов,  она лишь говорит бекенду что нужно вызвать другой ИИ для переписания.\n" +
                 "То есть если задали вопрос то просто отвечаешь на него, если попросили переписать каким то образом, то отвечаешь в роде \"Хорошо, переписываю ваш документ\" и вызываешь функцию \"rewrite_doc\".",
             },
@@ -138,8 +138,9 @@ async def message(
             new_doc_version_id = str(new_doc_version.id)
         else:
             new_doc_version_id = None
-    
+
     if rewrite_requested:
-        background_tasks.add_task(rewrite_doc, origin_content, data.content, new_doc_version_id)
-    
+        background_tasks.add_task(
+            rewrite_doc, origin_content, data.content, new_doc_version_id)
+
     return NewMessageOut(content=content, new_doc_version_id=new_doc_version_id)

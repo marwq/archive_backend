@@ -12,7 +12,7 @@ from src.infrastructure.uow import SQLAlchemyUoW
 from src.application.s3 import upload_s3_and_ocr
 from src.application.text_to_pdf import text_to_pdf
 from src.presentation.di import get_uow, get_user_id
-from ..schemas.search import DocOriginOut, SearchOut, SearchIn, DocVersionOut, DocIn
+from ..schemas.search import DocOriginOut, DocVersionIn, SearchOut, SearchIn, DocVersionOut, DocIn, SaveIn
 from config import settings
 from src.application.redis import redis_client
 
@@ -69,3 +69,16 @@ async def markdown_to_pdf(data: DocIn) -> FileResponse:
     return FileResponse(path=filepath, filename=filename, media_type="application/pdf")
 
 
+@router.post("/save")
+async def save_doc(
+    data: DocVersionIn,
+    user_id: str = Depends(get_user_id),
+    uow: Annotated[SQLAlchemyUoW, Depends(get_uow)] = ...,
+):
+    async with uow:
+        doc_version = await uow.chat_repo.edit_doc_version(data.doc_version_id, data.content)
+        doc_version_out = dict(
+            id=data.doc_version_id,
+            content=data.content,
+        )
+    return doc_version_out

@@ -17,6 +17,11 @@ class DocVersionOut(BaseModel):
     updated_at: datetime
 
 
+class DocVersionIn(BaseModel):
+    doc_version_id: UUID4
+    content: str
+
+
 class DocOriginOut(BaseModel):
     id: UUID4
     content: str
@@ -27,3 +32,7 @@ class DocOriginOut(BaseModel):
 
 class SearchOut(BaseModel):
     doc_origins: list[DocOriginOut]
+
+
+class SaveIn(BaseModel):
+    doc_version_id: str

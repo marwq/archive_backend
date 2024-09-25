@@ -1,9 +1,10 @@
 import os
 from pinecone import Pinecone, ServerlessSpec
 from dotenv import load_dotenv, find_dotenv
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from llama_index.embeddings.gemini import GeminiEmbedding
 from config import settings
+from dataclasses import dataclass
 
 
 model_name = "models/embedding-001"
@@ -13,10 +14,10 @@ embed_model = GeminiEmbedding(
 )
 
 
+@dataclass
 class Doc:
-    def __init__(self, id: str, text: str):
-        self.text = text
-        self.id = id
+    text: str
+    id: str
 
 
 def initialize_pinecone() -> Pinecone:
@@ -41,7 +42,9 @@ def initialize_pinecone() -> Pinecone:
     return pc.Index(index_name)
 
 
-def text_to_vector(doc: Doc, index: Pinecone.Index) -> List[float]:
+def text_to_vector(doc: Doc, index: Optional[Pinecone.Index] = None) -> List[float]:
+    if index is None:
+        index = initialize_pinecone()
     # Generate the vector for the document text
     vector = embed_model.get_text_embedding(doc.text)
 
