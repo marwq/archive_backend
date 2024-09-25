@@ -18,5 +18,3 @@ openai
 
 opencv-python
 numpy
-markdown 
-weasyprint

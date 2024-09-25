@@ -1,15 +1,16 @@
 from typing import Annotated, List
 import asyncio
+from secrets import token_hex
 
 from fastapi import APIRouter, Form, UploadFile, File, Depends, WebSocket, BackgroundTasks
 from fastapi.responses import FileResponse
-import markdown
+from starlette.concurrency import run_in_threadpool
 from pydantic import UUID4
 from loguru import logger
-from weasyprint import HTML
 
 from src.infrastructure.uow import SQLAlchemyUoW
 from src.application.s3 import upload_s3_and_ocr
+from src.application.text_to_pdf import text_to_pdf
 from src.presentation.di import get_uow, get_user_id
 from ..schemas.search import DocOriginOut, SearchOut, SearchIn, DocVersionOut, DocIn
 from config import settings
@@ -60,20 +61,11 @@ async def search_from_vectordb(
 @router.post("/markdown-to-pdf")
 async def markdown_to_pdf(data: DocIn) -> FileResponse:
     # Convert Markdown to HTML
-    html_content = markdown.markdown(data.text)
-
-    # Create an HTML object from the converted HTML content
-    html = HTML(string=html_content)
-
-    # Generate the PDF file and save it
-    pdf_filename = "output.pdf"
-    html.write_pdf(pdf_filename)
+    filename = f"{token_hex(4)}.pdf"
+    filepath = f"temp_files/{filename}"
+    await run_in_threadpool(text_to_pdf, data.text, filepath)
 
     # Return the generated PDF file as a response
-    return FileResponse(path=pdf_filename, filename=pdf_filename, media_type="application/pdf")
+    return FileResponse(path=filepath, filename=filename, media_type="application/pdf")
 
 
-@router.save("/save")
-async def save_doc(
-    data: DocIn,
-)
