@@ -35,4 +35,4 @@ class NewMessageIn(BaseModel):
 class NewMessageOut(BaseModel):
     content: str
     new_doc_version_id: str | None = None
-    
+

@@ -12,7 +12,7 @@ from src.infrastructure.uow import SQLAlchemyUoW
 from src.application.s3 import upload_s3_and_ocr
 from src.application.text_to_pdf import text_to_pdf
 from src.presentation.di import get_uow, get_user_id
-from ..schemas.search import DocOriginOut, DocVersionIn, SearchOut, SearchIn, DocVersionOut, DocIn, SaveIn
+from ..schemas.search import DocOriginOut, DocVersionIn, SearchOut, SearchIn, DocVersionOut, DocIn, ChatFromSearchIn, ChatFromSearchOut
 from config import settings
 from src.application.redis import redis_client
 
@@ -82,3 +82,17 @@ async def save_doc(
             content=data.content,
         )
     return doc_version_out
+
+
+@router.post("/chat_from_search")
+async def chat_from_search(
+    data: ChatFromSearchIn,
+    user_id: Annotated[str, Depends(get_user_id)],
+    uow: Annotated[SQLAlchemyUoW, Depends(get_uow)] = ...,
+) -> ChatFromSearchOut:
+    async with uow:
+        chat = await uow.chat_repo.create_chat(user_id)
+        doc_origin = await uow.chat_repo.get_doc_origin_by_id(data.doc_origin_id)
+        doc_version = await uow.chat_repo.create_doc_version(chat.id, data.doc_origin_id, doc_origin.content)
+        return ChatFromSearchOut(doc_origin.content, chat.id, doc_version.id)
+

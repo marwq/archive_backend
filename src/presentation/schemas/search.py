@@ -36,3 +36,12 @@ class SearchOut(BaseModel):
 
 class SaveIn(BaseModel):
     doc_version_id: str
+
+
+class ChatFromSearchIn(BaseModel):
+    doc_origin_id: str
+
+class ChatFromSearchOut(BaseModel):
+    content: str
+    chat_id: str
+    doc_version_id: str
