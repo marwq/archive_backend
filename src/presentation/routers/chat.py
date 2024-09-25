@@ -8,7 +8,7 @@ from loguru import logger
 
 from src.infrastructure.uow import SQLAlchemyUoW
 from src.infrastructure.models import Chat, DocOrigin, DocVersion
-from src.application.s3 import upload_s3_and_ocr
+from src.application.s3 import upload_s3_and_ocr, get_download_link_from_s3_cached
 from src.presentation.di import get_uow, get_user_id
 from ..schemas.chat import NewChatOut, NewMessageIn, NewMessageOut, ChatOut, DocVersionOut, MessageOut
 from config import settings
@@ -46,10 +46,14 @@ async def get_chat(
 ) -> ChatOut:
     async with uow:
         chat = await uow.chat_repo.get_item_by_id(str(chat_id))
+        doc_origin = chat.doc_versions[0].doc_origin
+        object_name = f"{doc_origin.id}.{doc_origin.ext}"
+        # image_url = await get_download_link_from_s3_cached(settings.AWS_BUCKET_NAME, object_name),
         resp = ChatOut(
             id=chat.id,
             title=chat.title,
             created_at=chat.created_at,
+            image_url="test",
             doc_versions=[
                 DocVersionOut(
                     id=dv.id,
