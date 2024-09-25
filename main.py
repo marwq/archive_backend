@@ -29,7 +29,6 @@ def main():
     kwargs = dict(
         host="0.0.0.0",
         port=settings.APP_PORT,
-        reload=True,
         workers=4,
     )
 
