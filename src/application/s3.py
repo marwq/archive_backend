@@ -52,8 +52,7 @@ async def upload_file_to_s3(file_content: bytes, bucket_name: str, object_name: 
         try:
             async with aopen(file_path, 'rb') as file:
                 await s3_client.upload_fileobj(file, bucket_name, object_name)
-            logger.info(f"File {file_path} uploaded to {
-                        bucket_name}/{object_name}")
+            logger.info(f"File {file_path} uploaded to {bucket_name}/{object_name}")
         except Exception as e:
             logger.info(f"Error uploading file: {e}")
             return False
@@ -78,8 +77,7 @@ async def get_download_link_from_s3(bucket_name: str, object_name: str, expirati
                 Params={'Bucket': bucket_name, 'Key': object_name},
                 ExpiresIn=expiration
             )
-            logger.info(f"Generated download link for {
-                        bucket_name}/{object_name}: {download_url}")
+            logger.info(f"Generated download link for {bucket_name}/{object_name}: {download_url}")
             return download_url
         except Exception as e:
             logger.error(f"Error generating download link: {e}")
