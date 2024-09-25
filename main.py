@@ -19,6 +19,8 @@ app.add_middleware(
     allow_methods=["*"],  # Разрешаем все HTTP методы (GET, POST, PUT, DELETE и т.д.)
     allow_headers=["*"],  # Разрешаем все заголовки
 )
+from loguru import logger
+logger.info("cors")
 register_routers(app)
 
 
