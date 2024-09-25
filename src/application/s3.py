@@ -88,7 +88,9 @@ async def get_download_link_from_s3(bucket_name: str, object_name: str, expirati
 
 async def get_download_link_from_s3_cached(bucket_name: str, object_name: str, expire: int = 3600) -> str:
     url = await redis_client.get(f"download_url:{bucket_name}:{object_name}")
+    logger.info(f"url1: {url!r}")
     if not url:
-        url = await get_download_link_from_s3(bucket_name, object_name, expire)
+        url = str(await get_download_link_from_s3(bucket_name, object_name, expire))
+        logger.info(f"url2: {url!r}")
         await redis_client.set(f"download_url:{bucket_name}:{object_name}", url, expire)
     return url
