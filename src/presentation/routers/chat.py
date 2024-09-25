@@ -39,43 +39,6 @@ async def new(
     return NewChatOut(chat_id=chat_id, doc_version_id=doc_version_id)
 
 
-@router.get("/{chat_id}")
-async def get_chat(
-    chat_id: UUID4,
-    uow: Annotated[SQLAlchemyUoW, Depends(get_uow)] = ...,
-) -> ChatOut:
-    async with uow:
-        chat = await uow.chat_repo.get_item_by_id(str(chat_id))
-        doc_origin = chat.doc_versions[0].doc_origin
-        object_name = f"{doc_origin.id}.{doc_origin.ext}"
-        image_url = await get_download_link_from_s3_cached(settings.AWS_BUCKET_NAME, object_name)
-        resp = ChatOut(
-            id=chat.id,
-            title=chat.title,
-            created_at=chat.created_at,
-            image_url=image_url,
-            doc_versions=[
-                DocVersionOut(
-                    id=dv.id,
-                    content=dv.content,
-                    created_at=dv.created_at,
-                    updated_at=dv.updated_at
-                )
-                for dv in chat.doc_versions
-            ],
-            messages=[
-                MessageOut(
-                    id=msg.id,
-                    is_user=msg.is_user,
-                    content=msg.content,
-                    created_at=msg.created_at,
-                )
-                for msg in chat.messages
-            ]
-        )
-    return resp
-
-
 @router.websocket("/streaming/{doc_version_id}")
 async def streaming(
     doc_version_id: UUID4,
@@ -144,3 +107,79 @@ async def message(
             rewrite_doc, origin_content, data.content, new_doc_version_id)
 
     return NewMessageOut(content=content, new_doc_version_id=new_doc_version_id)
+
+
+@router.get("/list")
+async def chat_list(
+    user_id: Annotated[int, Depends(get_user_id)],
+    uow: Annotated[SQLAlchemyUoW, Depends(get_uow)],
+) -> list[ChatOut]:
+    resp = []
+    async with uow:
+        for chat in await uow.chat_repo.get_user_chats(user_id):
+            doc_origin = chat.doc_versions[0].doc_origin
+            object_name = f"{doc_origin.id}.{doc_origin.ext}"
+            image_url = await get_download_link_from_s3_cached(settings.AWS_BUCKET_NAME, object_name)
+            chat_out = ChatOut(
+                id=chat.id,
+                title=chat.title,
+                created_at=chat.created_at,
+                image_url=image_url,
+                doc_versions=[
+                    DocVersionOut(
+                        id=dv.id,
+                        content=dv.content,
+                        created_at=dv.created_at,
+                        updated_at=dv.updated_at
+                    )
+                    for dv in chat.doc_versions
+                ],
+                messages=[
+                    MessageOut(
+                        id=msg.id,
+                        is_user=msg.is_user,
+                        content=msg.content,
+                        created_at=msg.created_at,
+                    )
+                    for msg in chat.messages
+                ]
+            )
+            resp.append(chat_out)
+    return resp
+
+
+@router.get("/{chat_id}")
+async def get_chat(
+    chat_id: UUID4,
+    uow: Annotated[SQLAlchemyUoW, Depends(get_uow)] = ...,
+) -> ChatOut:
+    async with uow:
+        chat = await uow.chat_repo.get_item_by_id(str(chat_id))
+        doc_origin = chat.doc_versions[0].doc_origin
+        object_name = f"{doc_origin.id}.{doc_origin.ext}"
+        image_url = await get_download_link_from_s3_cached(settings.AWS_BUCKET_NAME, object_name)
+        resp = ChatOut(
+            id=chat.id,
+            title=chat.title,
+            created_at=chat.created_at,
+            image_url=image_url,
+            doc_versions=[
+                DocVersionOut(
+                    id=dv.id,
+                    content=dv.content,
+                    created_at=dv.created_at,
+                    updated_at=dv.updated_at
+                )
+                for dv in chat.doc_versions
+            ],
+            messages=[
+                MessageOut(
+                    id=msg.id,
+                    is_user=msg.is_user,
+                    content=msg.content,
+                    created_at=msg.created_at,
+                )
+                for msg in chat.messages
+            ]
+        )
+    return resp

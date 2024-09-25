@@ -80,3 +80,11 @@ class ChatRepo(SQLAlchemyRepo[Chat]):
             if doc_origin:
                 doc_origins.append(doc_origin)
         return doc_origins
+    
+    async def get_user_chats(self, user_id: str) -> list[Chat]:
+        stmt = (
+            select(Chat)
+            .where(Chat.user_id == user_id)
+        )
+        resp = await self._session.execute(stmt)
+        return resp.scalars().all()
