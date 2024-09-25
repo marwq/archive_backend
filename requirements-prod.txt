@@ -18,3 +18,4 @@ openai
 
 opencv-python
 numpy
+markdown-pdf
