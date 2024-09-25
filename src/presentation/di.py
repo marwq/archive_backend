@@ -71,7 +71,7 @@ async def get_user_id(
         token = create_access_token(
             data={"sub": str(user_id)}, expires_delta=expires_delta
         )
-        response.set_cookie("token", token, max_age=expires_delta.total_seconds())
+        response.set_cookie("token", token, httponly=True)
     return user_id
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
