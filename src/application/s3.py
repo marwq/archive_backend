@@ -39,7 +39,7 @@ async def upload_s3_and_ocr(
         chat = doc_version.chat
         chat.title = title
         await uow.commit()
-    text_to_vector(Doc(text, doc_version_id))
+    await run_in_threadpool(text_to_vector, Doc(text, doc_version_id))
 
 
 async def upload_file_to_s3(file_content: bytes, bucket_name: str, object_name: str):
