@@ -1,23 +1,23 @@
-import cv2
-import numpy as np
+# import cv2
+# import numpy as np
 
 
-def preprocess_image(image_path, save_path=None):
+# def preprocess_image(image_path, save_path=None):
 
-    image = cv2.imread(image_path)
+#     image = cv2.imread(image_path)
 
-    sharpening_kernel = np.array([[-1, -1, -1],
-                                  [-1, 9, -1],
-                                  [-1, -1, -1]])
-    sharpened_image = cv2.filter2D(image, -1, sharpening_kernel)
+#     sharpening_kernel = np.array([[-1, -1, -1],
+#                                   [-1, 9, -1],
+#                                   [-1, -1, -1]])
+#     sharpened_image = cv2.filter2D(image, -1, sharpening_kernel)
 
-    contrast_stretched_image = cv2.normalize(
-        sharpened_image, None, 0, 255, cv2.NORM_MINMAX)
+#     contrast_stretched_image = cv2.normalize(
+#         sharpened_image, None, 0, 255, cv2.NORM_MINMAX)
 
-    if save_path:
-        cv2.imwrite(save_path, contrast_stretched_image)
+#     if save_path:
+#         cv2.imwrite(save_path, contrast_stretched_image)
 
-    return contrast_stretched_image
+#     return contrast_stretched_image
 
 ############################################################################################################
 # def preprocess_image(image_path, save_path=None):
