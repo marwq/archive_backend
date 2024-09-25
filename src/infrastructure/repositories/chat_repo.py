@@ -8,7 +8,7 @@ from src.infrastructure.models import Chat, DocVersion, DocOrigin, Message
 from src.infrastructure.repositories.base import SQLAlchemyRepo
 
 # Import functions from vectordb.py
-from src.application.vectordb import initialize_pinecone, search_text
+from src.application.vectordb import initialize_pinecone, search_text, text_to_vector
 
 
 class ChatRepo(SQLAlchemyRepo[Chat]):
