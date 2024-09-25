@@ -71,3 +71,9 @@ async def markdown_to_pdf(data: DocIn) -> FileResponse:
 
     # Return the generated PDF file as a response
     return FileResponse(path=pdf_filename, filename=pdf_filename, media_type="application/pdf")
+
+
+@router.save("/save")
+async def save_doc(
+    data: DocIn,
+)
