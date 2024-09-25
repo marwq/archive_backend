@@ -48,12 +48,12 @@ async def get_chat(
         chat = await uow.chat_repo.get_item_by_id(str(chat_id))
         doc_origin = chat.doc_versions[0].doc_origin
         object_name = f"{doc_origin.id}.{doc_origin.ext}"
-        # image_url = await get_download_link_from_s3_cached(settings.AWS_BUCKET_NAME, object_name),
+        image_url = await get_download_link_from_s3_cached(settings.AWS_BUCKET_NAME, object_name)
         resp = ChatOut(
             id=chat.id,
             title=chat.title,
             created_at=chat.created_at,
-            image_url="test",
+            image_url=image_url,
             doc_versions=[
                 DocVersionOut(
                     id=dv.id,
